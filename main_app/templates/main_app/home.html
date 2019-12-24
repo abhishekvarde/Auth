@@ -12,7 +12,7 @@
 
     {% if request.user.is_authenticated %}
     <h1>User Loging</h1>
-        <form action="/logout/" method="GET">
+        <form action="/logout_user/" method="GET">
         <button type="submit">Logout</button>
     </form>
     <br>
@@ -22,7 +22,7 @@
         <button type="submit">Enter here to login</button>
        </form>
     <br>
-        <form action="/register/" method="GET">
+        <form action="/register_user/" method="GET">
         <button type="submit">Enter here to register</button>
         </form>
    {% endif %}

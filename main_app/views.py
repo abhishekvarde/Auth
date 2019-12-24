@@ -137,7 +137,8 @@ def register(request):
 
 def logout(request):
     auth_logout(request)
-    return render(request, "main_app/home.html");
+
+    return render(request, "main_app/home.html")
 
 
 @api_view(['POST'])

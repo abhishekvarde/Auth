@@ -10,6 +10,7 @@ class Employee(models.Model):
     application_id = models.CharField(max_length=50,null=True)
     is_verify = models.BooleanField(default=False)
     tags = models.CharField(max_length=50,null=True)
+    channel_id = models.IntegerField(default=0,null=True)
     def __str__(self):
         return self.user.username
 

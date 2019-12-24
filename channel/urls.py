@@ -3,5 +3,5 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-        path('upload/',views.upload_video,name='upload_video'),
+        path('create_channel/',views.create_channel,name='upload_video'),
 ]

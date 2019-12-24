@@ -38,8 +38,8 @@ INSTALLED_APPS = [
     'main_app',
     'rest_framework',
     'rest_framework.authtoken',
-    'video',
-    'channel',
+    'video.apps.VideoConfig',
+    'channel.apps.ChannelConfig',
 ]
 
 MIDDLEWARE = [
