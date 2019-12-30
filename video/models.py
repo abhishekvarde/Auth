@@ -1,20 +1,18 @@
 from django.db import models
-# from django.apps import apps
 
 
 class video_class(models.Model):
-    channel_id = models.IntegerField(primary_key=True)
-    video = models.FileField(upload_to='videous')
-    length_of_video = models.IntegerField()
+    channel_id = models.IntegerField(default=0)
+    video = models.FileField(upload_to='video')
+    length_of_video = models.IntegerField(default=0)
     url = models.URLField()
     thumb_image = models.ImageField(upload_to='thumb_image')
-    channel_id = models.CharField(max_length=100,null=True)
-    like = models.IntegerField()
-    dislike = models.IntegerField()
+    like = models.IntegerField(default=0)
+    dislike = models.IntegerField(default=0)
     description = models.CharField(max_length=200)
-    playlist = models.CharField(max_length=100)
+    playlist = models.CharField(max_length=100, default='video')
     title = models.CharField(max_length=100)
     uploaded_on = models.DateTimeField(auto_now_add=True)
-    is_downloadable = models.BooleanField()
-    is_sharable = models.BooleanField()
+    is_downloadable = models.BooleanField(default=False)
+    is_sharable = models.BooleanField(default=False)
 # PlayList

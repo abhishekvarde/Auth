@@ -1,10 +1,10 @@
 from django.db import models
+
+
 # from video.models import video_class
 
 
-
 class channel_model(models.Model):
-    channel_id =models.IntegerField(primary_key=True)
     logo = models.ImageField(upload_to='channel_logo')
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
