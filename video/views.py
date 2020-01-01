@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from main_app.models import Employee
 from channel.models import channel_model
-from main_app.views import logger_function
+from main_app.views import logger_function, video_logger
 from .models import video_class
 from django.core.files.storage import FileSystemStorage
 
@@ -194,6 +194,7 @@ def like_video(request):
                 error = "False"
                 message = "video liked successfully"
                 token = "empty"
+                video_logger(emp_obj.id, video_obj.id, "", 'like')
                 data = {'error': error, 'message': message, 'token': token}
                 logger_function(token, message)
                 return Response(data)
@@ -256,6 +257,7 @@ def dislike_video(request):
                 error = "False"
                 message = "video disliked successfully"
                 token = "empty"
+                video_logger(emp_obj.id, video_obj.id, "",  'dislike')
                 data = {'error': error, 'message': message, 'token': token}
                 logger_function(token, message)
                 return Response(data)

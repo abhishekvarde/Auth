@@ -1,7 +1,7 @@
 import math
 import random
 import requests
-from datetime import datetime
+from datetime import datetime, date
 from pymongo import MongoClient
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render
@@ -24,7 +24,83 @@ db = db.geniobits
 
 # Logger function
 
+# logger_history_function
+
+
+def video_logger(user_id, video_id, video_tags, activity):
+    client = MongoClient('mongodb://127.0.0.1:27017')
+    db = client.geniobits
+    mycollection = db['video_log']
+    today = date.today()
+    print(datetime.now())
+    today = (str(datetime.now()).split(" ")[1]).split(".")[0]
+    print(today)
+    if mycollection.find({'user_id': user_id}).count() <= 0:
+        mydict = {'user_id': user_id, 'activity': []}
+        inserting = mycollection.insert(mydict)
+    result = mycollection.update({
+        'user_id': user_id
+    }, {
+        '$push': {
+            'activity': {'video_id': video_id, 'video_tags': video_tags, 'activity': activity,
+                         'time': str(datetime.now())}
+        }
+    })
+
+
 def logger_function(username, activity):
+    flag = 0
+    print('call')
+    if User.objects.filter(username=username):
+        print('username found in database')
+        flag = 1
+
+    if Token.objects.filter(key=username):
+        print('Token found in database')
+        token = Token.objects.get(key=username)
+        username = token.user.username
+        flag = 1
+
+    if flag == 1:
+        client = MongoClient('mongodb://127.0.0.1:27017')
+        print('database connection successfully')
+        db = client.geniobits
+        mycollection = db[username]
+        today = date.today()
+        today = str(today)
+        today = '2019-12-31'
+        print('today date : ' + today)
+        print(username)
+        if username in db.list_collection_names():
+            print('usename found in document ')
+            result = mycollection.update({
+                'date': today
+            }, {
+                '$push': {
+                    "activity": activity,
+                }
+            })
+            print(str(result['updatedExisting']) + ' date not found create new database')
+            if not result['updatedExisting']:
+                mycollection.insert({
+                    'user': username,
+                    "activity": [activity],
+                    "date": today
+                })
+                print('new document create successful')
+        else:
+            print('usename not found in document')
+            mycollection.insert({
+                'user': username,
+                "activity": [activity],
+                "date": today
+            })
+    else:
+        print('username not found')
+    return
+
+
+def logger_function_no_work(username, activity):
     flag = 0
     if User.objects.filter(username=username).exists():
         flag = 1
@@ -274,14 +350,14 @@ def mobile_check(request):
                     message = "User phone number is updated."
                     token = "empty"
                     data = {"error": error, "message": message, "token": token}
-                    logger_function(username, message)
+                    logger_function(token, message)
                     return Response(data)
                 else:
                     error = "False"
                     message = "User phone number is already correct."
                     token = "empty"
                     data = {"error": error, "message": message, "token": token}
-                    logger_function(username, message)
+                    logger_function(token, message)
                     return Response(data)
         error = "True"
         message = "Token is not present or phone_no is not present."
@@ -318,20 +394,20 @@ def delete_user(request):
                     message = "your channel deleted successfully and your videos too"
                     token = "empty"
                     data = {'error': error, 'message': message, 'token': token}
-                    logger_function(username, message)
+                    logger_function(token, message)
                     return Response(data)
                 error = "False"
                 message = "channel was not created"
                 token = "empty"
                 data = {'error': error, 'message': message, 'token': token}
-                logger_function(username, message)
+                logger_function(token, message)
                 return Response(data)
             user.delete()
             error = "False"
             message = "user deleted or may user is admin with doesn't have employee table entry"
             token = "empty"
             data = {'error': error, 'message': message, 'token': token}
-            logger_function(username, message)
+            logger_function(token, message)
             return Response(data)
         error = "True"
         message = "invalid token"
@@ -489,7 +565,7 @@ def password_change(request):
                     message = 'password can\'t be old one'
                     token = 'empty'
                     data = {'error': error, 'message': message, 'token': token}
-                    logger_function(username, message)
+                    logger_function(token, message)
                     return Response(data)
                 user.password = password
                 user.save()
@@ -497,7 +573,7 @@ def password_change(request):
                 message = 'password reset successfully'
                 token = 'empty'
                 data = {'error': error, 'message': message, 'token': token}
-                logger_function(username, message)
+                logger_function(token, message)
                 return Response(data)
             error = 'True'
             message = 'user is invalid'
