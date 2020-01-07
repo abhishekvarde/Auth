@@ -28,4 +28,6 @@ urlpatterns = [
     path('verify_otp_reset/', views.verify_otp_reset, name='verify_otp_reset'),
     path('resend_reset_otp/', views.resend_reset_otp, name='resend_reset_otp'),
     path('password_change/', views.password_change, name='password_change'),
+    path('trending/', views.trending, name='trending'),
+    path('search/', views.search, name='search'),
 ]

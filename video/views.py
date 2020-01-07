@@ -8,6 +8,7 @@ from channel.models import channel_model
 from main_app.views import logger_function, video_logger
 from .models import video_class
 from django.core.files.storage import FileSystemStorage
+from video.loading import language, language_filter, filter_unnessary
 
 
 # Create your views here.
@@ -28,6 +29,7 @@ def upload_video(request):
         thumb_image = request.FILES.get('thumb_image')
         # url = fs.url(filename)
         title = request.POST.get('title')
+        tags = request.POST.get('tags')
         description = request.POST.get('description')
         if Token.objects.filter(key=token).exists():
             token_obj = Token.objects.get(key=token)
@@ -37,8 +39,23 @@ def upload_video(request):
                 if emp_obj.channel_id != 0:
                     channel_id = emp_obj.channel_id
                     if channel_model.objects.filter(id=channel_id).exists():
+
+                        if title is not None:
+                            if tags is None:
+                                tags = ""
+                            tags = tags.split(",")
+                            # title_for_tags = title.split(" ")  # filtering for the work
+                            # for t in title_for_tags:
+                            #     tags.append(t)
+                            if "" in tags:
+                                tags.remove("")
+                            lang, sentence = language_filter(title)
+                            useful_tag_list = filter_unnessary(sentence)
+                            tags.append(",".join(useful_tag_list))
+                            tags.append(lang)
+                            tags = ",".join(tags)
                         new_video = video_class(channel_id=channel_id, video=video, thumb_image=thumb_image
-                                                , title=title, description=description)
+                                                , title=title, description=description, tags=tags)
                         new_video.save()
                         cha_obj = channel_model.objects.get(id=channel_id)
                         vid = cha_obj.video_id
@@ -257,7 +274,7 @@ def dislike_video(request):
                 error = "False"
                 message = "video disliked successfully"
                 token = "empty"
-                video_logger(emp_obj.id, video_obj.id, "",  'dislike')
+                video_logger(emp_obj.id, video_obj.id, "", 'dislike')
                 data = {'error': error, 'message': message, 'token': token}
                 logger_function(token, message)
                 return Response(data)
@@ -277,3 +294,5 @@ def dislike_video(request):
     token = "empty"
     data = {'error': error, 'message': message, 'token': token}
     return Response(data)
+
+

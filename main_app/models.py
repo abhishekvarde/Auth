@@ -32,3 +32,19 @@ class Otp(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+class Custom(models.Model):
+    # first_name = models.CharField(max_length=255)
+    # last_name = models.CharField(max_length=255)
+    username = models.CharField(max_length=40)
+    email = models.CharField(max_length=40)
+    password = models.CharField(max_length=40)
+    # user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_no = models.IntegerField()
+    application_id = models.CharField(max_length=50, null=True)
+    is_verify = models.BooleanField(default=False)
+    liked = models.CharField(max_length=255, default="")
+    disliked = models.CharField(max_length=255, default="")
+    tags = models.CharField(max_length=50, null=True)
+    channel_id = models.IntegerField(default=0, null=True)

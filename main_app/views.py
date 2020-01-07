@@ -14,6 +14,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout as auth_logout
 from channel.models import channel_model
 from video.models import video_class
+from video.loading import filter_unnessary
 
 client = MongoClient('mongodb://127.0.0.1:27017')
 db = client.test
@@ -51,14 +52,14 @@ def video_logger(user_id, video_id, video_tags, activity):
 def logger_function(username, activity):
     flag = 0
     print('call')
-    if User.objects.filter(username=username):
+    if User.objects.filter(username=username):  # change here
         print('username found in database')
         flag = 1
 
     if Token.objects.filter(key=username):
         print('Token found in database')
         token = Token.objects.get(key=username)
-        username = token.user.username
+        username = token.user.username  # change here
         flag = 1
 
     if flag == 1:
@@ -102,7 +103,7 @@ def logger_function(username, activity):
 
 def logger_function_no_work(username, activity):
     flag = 0
-    if User.objects.filter(username=username).exists():
+    if User.objects.filter(username=username).exists():  # change here
         flag = 1
     if Token.objects.filter(key=username).exists():
         token_obj = Token.objects.get(key=username)
@@ -128,16 +129,16 @@ def login_user(request):
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, username=username, password=password)  # change here
         if user is not None:
-            login(request, user)
-            if Token.objects.filter(user=user).exists():
-                token = Token.objects.get(user=user)
+            login(request, user)  # change here
+            if Token.objects.filter(user=user).exists():  # change here
+                token = Token.objects.get(user=user)  # change here
                 token.delete()
-            token = Token.objects.create(user=user)
-            user = User.objects.get(username=token.user.username)
+            token = Token.objects.create(user=user)  # change here
+            user = User.objects.get(username=token.user.username)  # change here
             print(user.username)
-            emp_object = Employee.objects.get(user=user)
+            emp_object = Employee.objects.get(user=user)  # change here
             if not emp_object.is_verify:
                 data = {'message': 'mobile number not verify', 'error': 'False', 'token': token.key}
             data = {'message': 'user log in successfully', 'error': 'False', 'token': token.key}
@@ -181,11 +182,11 @@ def register(request):
         print(password)
         print(re_password)
         if password == re_password:
-            if User.objects.filter(username=username).exists():
+            if User.objects.filter(username=username).exists():  # change here
                 data = {'message': 'username already exist', 'error': 'True', 'token': ''}
             else:
-                if not Employee.objects.filter(phone_no=phone_no).exists():
-                    user = User.objects.create_user(username, email, password)
+                if not Employee.objects.filter(phone_no=phone_no).exists():  # change here
+                    user = User.objects.create_user(username, email, password)  # change here
                     user.save()
                     profile = Employee(user=user, phone_no=phone_no)
                     profile.save()
@@ -198,7 +199,7 @@ def register(request):
                     for i in range(6):
                         OTP += digits[math.floor(random.random() * 10)]
                     if not Otp.objects.filter(user=user):
-                        obj = Otp(user=user, attempts=5, OTP=OTP)
+                        obj = Otp(user=user, attempts=5, OTP=OTP)  # change here
                         obj.save()
                     obj = Otp.objects.get(user=user)
                     if obj.get_time_diff() > 3600:
@@ -590,3 +591,82 @@ def password_change(request):
     token = 'empty'
     data = {'error': error, 'message': message, 'token': token}
     return Response(data)
+
+
+# trending data for the user with any search when he visit for the first time.
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def trending(request):
+    token = request.POST.get('token')
+    if Token.objects.filter(key=token).exists():
+        token_obj = Token.objects.get(key=token)
+        user = token_obj.user
+        if Employee.objects.filter(user=user).exists():
+            emp_obj = Employee.objects.get(user=user)
+            if emp_obj.tags != "":
+                obj = emp_obj.tags
+                if obj is not None:
+                    lists = emp_obj.tags.split(",")
+                    user_dataset(lists)
+    return Response()
+
+
+def user_dataset(tags):
+    dataset = []
+    for tag in tags:
+        dataset_tags = video_class.objects.filter(tags__contains=tag)
+        for d in dataset_tags:
+            dataset.append(d)
+    dataset = list(dict.fromkeys(dataset))
+    list1 = []
+    list2 = []
+    for i in dataset:
+        video_score = 0
+        for tag in tags:
+            if tag in i.tags:
+                video_score += 100  # tags = 100 || like = 10 / total days || dislike = -10 / total days || views = 1/td
+        video_score += (i.views + 20 * (i.like - i.dislike)) / (i.get_time_diff())
+        list1.append(video_score)
+        list2.append(i.id)
+    list1, list2 = zip(*sorted(zip(list1, list2)))
+    all_videos = []
+    video_ids = list2
+    for i in video_ids:
+        video = video_class.objects.filter(id=i)
+        for v in video:
+            all_videos.append(v)
+    all_videos = all_videos[::-1]
+    print(all_videos)
+    return Response()
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def search(request):
+    result_videos = []  # separate list for the end result
+    search_keyword = request.POST.get('search')
+    if search_keyword is not None:
+        search_useful_tags = filter_unnessary(search_keyword)  # returns list of useful data only
+        for tags in search_useful_tags:
+            video_having_tags = video_class.objects.filter(tags__contains=tags)
+            for vid in video_having_tags:
+                result_videos.append(vid)
+            result_videos = list(dict.fromkeys(result_videos))  # Filter repeated objects
+            list1 = []
+            list2 = []
+            for v in result_videos:
+                video_score = 0
+                for tag in search_useful_tags:
+                    if tag in v.tags:
+                        video_score += 100
+                video_score += v.views + 20 * (v.like - v.dislike)  # ) / (v.get_time_diff())
+                list1.append(video_score)
+                list2.append(v)
+            list2 = list2[::-1]
+            print(list2)
+            dictn = {}
+            for l in list2:
+                dictn[l.id] = l.title
+            return Response(dictn)
